@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pricelist & Form Pembelian Robux - VILOG</title>
+  <title>Pricelist & Form Pembelian Heartopia - VILOG</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -12,87 +12,88 @@
   <header class="topbar">
     <div class="brand">
       <div class="brand-title">VILOG</div>
-      <div class="brand-sub">Pricelist & Form Pembelian Robux</div>
+      <div class="brand-sub">Pricelist & Form Pembelian Heartopia</div>
     </div>
-    <div id="shopStatusBadge" class="status-badge">—</div>
+    <!-- ✅ disamain biar status OPEN/CLOSE kebaca -->
+    <div id="adminBadge" class="status-badge">—</div>
   </header>
 
   <!-- BOARD ANNOUNCEMENT (render dari Firestore) -->
-<div id="announcementRoot"></div>
+  <div id="announcementRoot"></div>
 
   <!-- PRICELIST RENDER DARI FIRESTORE -->
   <div id="pricelistRoot"></div>
 
-<!-- Form -->
-<div class="form-container">
-  <h2>Form Pembelian Heartopia VILOG</h2>
+  <!-- Form -->
+  <div class="form-container">
+    <h2>Form Pembelian Heartopia VILOG</h2>
 
-  <form id="frm" autocomplete="off">
+    <form id="frm" autocomplete="off">
 
-    <div class="form-group">
-      <label for="loginMethod">Metode Login *</label>
-      <select id="loginMethod" name="loginMethod" required>
-        <option value="">-- Pilih Metode --</option>
-        <option value="Google">Google</option>
-        <option value="Facebook">Facebook</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="email">Email *</label>
-      <input type="email" id="email" name="email" placeholder="Email akun" required>
-    </div>
-
-    <div class="form-group">
-      <label for="pwd">Password *</label>
-      <input type="password" id="pwd" name="pwd" placeholder="Password akun" required>
-    </div>
-
-    <div class="form-group">
-      <label for="v2">Server *</label>
-      <select id="v2" name="v2" required>
-        <option value="">-- Pilih Server --</option>
-        <option value="SEA">SEA</option>
-        <option value="ASIA">ASIA</option>
-        <option value="TW">TW</option>
-        <option value="HK/MO">HK / MO</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <div class="notes">
-        Untuk membeli produk ini, akan diperlukan verifikasi kode/approve device dengan angka.
-        Centang apabila kamu bersedia standby & berkabar.
+      <div class="form-group">
+        <label for="loginMethod">Metode Login *</label>
+        <select id="loginMethod" name="loginMethod" required>
+          <option value="">-- Pilih Metode --</option>
+          <option value="Google">Google</option>
+          <option value="Facebook">Facebook</option>
+        </select>
       </div>
 
-      <label class="otp-check">
-        <input type="checkbox" id="agreeOtp" required>
-        <span>Saya telah membaca board announcement diatas & bisa standby sampai pesanan done.</span>
-      </label>
-    </div>
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email" placeholder="Email akun" required>
+      </div>
 
-    <div class="form-group hidden">
-      <label for="kt">Kategori *</label>
-      <input type="text" id="kt" name="kt" readonly required>
-    </div>
+      <div class="form-group">
+        <label for="pwd">Password *</label>
+        <input type="password" id="pwd" name="pwd" placeholder="Password akun" required>
+      </div>
 
-    <div class="form-group">
-      <label for="nm">Order *</label>
-      <input type="text" id="nm" name="nm" readonly required>
-    </div>
+      <div class="form-group">
+        <label for="v2">Server *</label>
+        <select id="v2" name="v2" required>
+          <option value="">-- Pilih Server --</option>
+          <option value="SEA">SEA</option>
+          <option value="ASIA">ASIA</option>
+          <option value="TW">TW</option>
+          <option value="HK/MO">HK / MO</option>
+        </select>
+      </div>
 
-    <div class="form-group">
-      <label for="hg">Harga *</label>
-      <input type="text" id="hg" name="hg" readonly required>
-    </div>
+      <div class="form-group">
+        <div class="notes">
+          Untuk membeli produk ini, akan diperlukan verifikasi kode/approve device dengan angka.
+          Centang apabila kamu bersedia standby & berkabar.
+        </div>
 
-    <div style="text-align:center; margin:14px 0 6px;">
-      <button type="button" id="btnTg">Pesan via Telegram</button>
-    </div>
-  </form>
-</div>
+        <label class="otp-check">
+          <input type="checkbox" id="agreeOtp" required>
+          <span>Saya telah membaca board announcement diatas & bisa standby sampai pesanan done.</span>
+        </label>
+      </div>
 
-  <!-- Payment Modal -->
+      <div class="form-group hidden">
+        <label for="kt">Kategori *</label>
+        <input type="text" id="kt" name="kt" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label for="nm">Order *</label>
+        <input type="text" id="nm" name="nm" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label for="hg">Harga *</label>
+        <input type="text" id="hg" name="hg" readonly required>
+      </div>
+
+      <div style="text-align:center; margin:14px 0 6px;">
+        <button type="button" id="btnTg">Pesan via Telegram</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Payment Modal (tetap ada di HTML kamu, walau di app.js heartopia saat ini belum dipanggil) -->
   <div id="paymentModalBackdrop" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h3 id="modalTitle">Pembayaran</h3>
@@ -167,24 +168,25 @@
 
     <hr class="admin-hr"/>
 
-    <!-- ✅ Announcement Editor -->
-<div class="admin-editor" style="margin-bottom:14px;">
-  <div class="admin-editor-head">
-    <div>
-      <div class="admin-h">Edit Announcement</div>
-      <div class="admin-sub">Isi board announcement untuk alur proses / info penting.</div>
+    <!-- Announcement Editor -->
+    <div class="admin-editor" style="margin-bottom:14px;">
+      <div class="admin-editor-head">
+        <div>
+          <div class="admin-h">Edit Announcement</div>
+          <div class="admin-sub">Isi board announcement untuk alur proses / info penting.</div>
+        </div>
+      </div>
+
+      <textarea id="adminAnnouncementText"
+        style="width:100%; min-height:110px; padding:10px; border-radius:12px; border:1px solid #e5e7eb; outline:none;"
+        placeholder="Tulis announcement / alur proses di sini..."></textarea>
+
+      <div class="admin-savebar" style="margin-top:10px;">
+        <button type="button" id="btnSaveAnnouncement" class="admin-save">Simpan Announcement</button>
+      </div>
     </div>
-  </div>
 
-  <textarea id="adminAnnouncementText"
-    style="width:100%; min-height:110px; padding:10px; border-radius:12px; border:1px solid #e5e7eb; outline:none;"
-    placeholder="Tulis announcement / alur proses di sini..."></textarea>
-
-  <div class="admin-savebar" style="margin-top:10px;">
-    <button type="button" id="btnSaveAnnouncement" class="admin-save">Simpan Announcement</button>
-  </div>
-</div>
-
+    <!-- Pricelist Editor -->
     <div class="admin-editor">
       <div class="admin-editor-head">
         <div>
@@ -208,3 +210,4 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
+```0
