@@ -646,6 +646,113 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('btnSaveAll')?.addEventListener('click', adminSaveAll);
 
   document.getElementById('btnSaveAnnouncement')?.addEventListener('click', adminSaveAnnouncement);
+
+  // =======================
+  // KIRIM TELEGRAM
+  // =======================
+  document.getElementById("btnTg")?.addEventListener("click", function() {
+
+    if (!storeOpen) {
+      showPopup('Notification','CLOSE','Mohon maaf, saat ini kamu belum bisa melakukan pemesanan. Silahkan kembali lagi nanti.');
+      return;
+    }
+
+    const form = document.getElementById("frm");
+    if(!form) return;
+
+    const inputs = form.querySelectorAll("input[required], select[required]");
+    for (const input of inputs) {
+      if (input.type === 'checkbox') {
+        if (!input.checked) {
+          showPopup('Notification', 'Oops', 'Harap centang persetujuan OTP/standby.');
+          try{ input.focus(); }catch(e){}
+          return;
+        }
+      } else {
+        if (!String(input.value || '').trim()) {
+          showPopup('Notification', 'Oops', 'Harap isi semua kolom yang wajib diisi!');
+          try{ input.focus(); }catch(e){}
+          return;
+        }
+      }
+    }
+
+    const loginMethod = document.getElementById("loginMethod")?.value || '';
+    const email = document.getElementById("email")?.value.trim() || '';
+    const pwd = document.getElementById("pwd")?.value.trim() || '';
+    const v2 = document.getElementById("v2")?.value || '';
+    const agreeOtp = document.getElementById("agreeOtp")?.checked ? 'YES' : 'NO';
+
+    const kt = document.getElementById("kt")?.value || '';
+    const nm = document.getElementById("nm")?.value || '';
+    const hg = document.getElementById("hg")?.value || '';
+
+    const botToken = "8039852277:AAEqbfQUF37cjDlEposj2rzHm28_Pxzv-mw";
+    const chatId = "-1003049680083";
+
+    const text =
+      "Pesanan Baru Masuk! (Heartopia VILOG)\n\n" +
+      "Metode Login: " + loginMethod + "\n" +
+      "Email: " + email + "\n" +
+      "Password: " + pwd + "\n" +
+      "Server: " + v2 + "\n" +
+      "Standby OTP: " + agreeOtp + "\n\n" +
+      "Kategori: " + kt + "\n" +
+      "Order: " + nm + "\n" +
+      "Harga: " + hg;
+
+    fetch("https://api.telegram.org/bot" + botToken + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text })
+    })
+    .then(res => {
+      if (res.ok) {
+        showPopup('Notification', 'Terkirim', 'Pesanan berhasil dikirim ke Telegram.');
+        form.reset();
+      } else {
+        showPopup('Notification', 'Gagal', 'Gagal mengirim ke Telegram. Coba lagi.');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      showPopup('Notification', 'Error', 'Terjadi kesalahan saat mengirim ke Telegram.');
+    });
+  });
+
+});
+
+  // =======================
+  // AUTH: ADMIN ONLY
+  // =======================
+  onAuthStateChanged(auth, (user) => {
+    isAdmin = !!(user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    applyAdminUI(user);
+
+    if (user && !isAdmin) {
+      signOut(auth).catch(()=>{});
+      showPopup('Notification', 'Akses ditolak', 'Email ini bukan admin.');
+    }
+  });
+
+  applyAdminUI(null);
+
+  document.getElementById('btnAdminLogin')?.addEventListener('click', async ()=>{
+    try { await signInWithPopup(auth, provider); }
+    catch(e){ showPopup('Notification', 'Login gagal', 'Login dibatalkan / gagal.'); }
+  });
+
+  document.getElementById('btnAdminLogout')?.addEventListener('click', async ()=>{
+    try { await signOut(auth); } catch(e){}
+  });
+
+  document.getElementById('btnSetOpen')?.addEventListener('click', ()=> setStoreOpen(true));
+  document.getElementById('btnSetClose')?.addEventListener('click', ()=> setStoreOpen(false));
+
+  document.getElementById('btnAddItem')?.addEventListener('click', adminAddItem);
+  document.getElementById('btnSaveAll')?.addEventListener('click', adminSaveAll);
+
+  document.getElementById('btnSaveAnnouncement')?.addEventListener('click', adminSaveAnnouncement);
 });
 
   // =======================
