@@ -1,4 +1,4 @@
-// app.js (ESM module)
+// app.js (ESM module) - HEARTOPIA VERSION
 
 // =======================
 // FIREBASE (CDN)
@@ -33,18 +33,18 @@ const firebaseConfig = {
 };
 
 const ADMIN_EMAIL = "dinijanuari23@gmail.com";
+
+// ✅ OPEN/CLOSE TETAP SAMA (global)
 const STORE_DOC_PATH = ["settings", "store"]; // settings/store -> { open: true/false }
-const PRICE_COL = "pricelist_items";          // collection pricelist_items
 
-// ✅ Announcement board (single doc)
-const ANNOUNCE_DOC_PATH = ["settings", "announcement"]; // settings/announcement -> { text: "..." }
+// ✅ DIPISAH KHUSUS HEARTOPIA
+const PRICE_COL = "pricelist_heartopia"; // collection khusus heartopia
+const ANNOUNCE_DOC_PATH = ["settings", "announcement_heartopia"]; // doc khusus heartopia
 
-// ✅ Kategori dropdown fixed
+// ✅ Kategori dropdown fixed (Heartopia)
 const CATEGORY_OPTIONS = [
-  "Robux Reguler",
-  "Robux Basic",
-  "Robux + Premium (1 Month)",
-  "Best offers 💯"
+  "Heart Diamond",
+  "Membership"
 ];
 
 // panel admin hanya tampil kalau URL ada ?admin=1
@@ -169,8 +169,7 @@ function applyStoreStatusUI(){
     badge.style.color = storeOpen ? '#14532d' : '#7f1d1d';
   }
 
-  // tombol pesan tetap bisa diklik saat CLOSE (biar munculin popup)
-  const btn = document.getElementById('btnTg');
+  const btn = document.getElementById('btnTg') || document.getElementById('btnWa');
   if(btn) btn.disabled = false;
 }
 
@@ -244,7 +243,6 @@ function applyAdminUI(user){
   if(btnAdd) btnAdd.disabled = !isAdmin;
   if(btnSave) btnSave.disabled = !isAdmin;
 
-  // announcement admin
   const announceArea = document.getElementById('adminAnnouncementText');
   const btnSaveAnn = document.getElementById('btnSaveAnnouncement');
   if(announceArea) announceArea.disabled = !isAdmin;
@@ -277,7 +275,6 @@ function startAnnouncementListener(){
     }
     renderAnnouncementToPage();
 
-    // sync admin textarea kalau ada
     const ta = document.getElementById('adminAnnouncementText');
     if(ta && document.activeElement !== ta){
       ta.value = announcementText;
@@ -312,12 +309,10 @@ async function adminSaveAnnouncement(){
 let unsubPricelist = null;
 
 function startPricelistListener(){
-  // ambil root kalau ada
   let root = document.getElementById('pricelistRoot');
 
-  // ✅ kalau root belum ada, BUAT otomatis dan taruh sebelum form
   if(!root){
-    const form = document.querySelector('.form-container') || document.getElementById('frm')?.closest('div');
+    const form = document.querySelector('.form-container');
     root = document.createElement('div');
     root.id = 'pricelistRoot';
 
@@ -334,7 +329,6 @@ function startPricelistListener(){
     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     pricelistCache = normalizeAndSort(items);
 
-    // sync admin draft dari firestore
     adminDraft = pricelistCache.map(x => ({ ...x }));
 
     renderPricelistToPage();
@@ -441,12 +435,12 @@ function renderAdminList(){
           </div>
 
           <div>
-            <label>Tipe (untuk form: Reguler/Basic/Premium)</label>
-            <input type="text" data-k="type" value="${escapeHtml(it.type || '')}">
+            <label>Tipe</label>
+            <input type="text" data-k="type" value="${escapeHtml(it.type || '')}" readonly>
           </div>
 
           <div class="full">
-            <label>Label (contoh: 500 Robux)</label>
+            <label>Label</label>
             <input type="text" data-k="label" value="${escapeHtml(it.label || '')}">
           </div>
 
@@ -456,7 +450,7 @@ function renderAdminList(){
           </div>
 
           <div>
-            <label>Sort (angka kecil tampil dulu)</label>
+            <label>Sort</label>
             <input type="number" step="1" data-k="sort" value="${Number(it.sort || 0)}">
           </div>
         </div>
@@ -464,7 +458,6 @@ function renderAdminList(){
     `;
   }).join('');
 
-  // bind inputs & selects & delete
   wrap.querySelectorAll('.admin-row').forEach(row => {
     const idx = Number(row.getAttribute('data-idx'));
 
@@ -474,6 +467,19 @@ function renderAdminList(){
         const k = el.getAttribute('data-k');
         let v = el.value;
         if(k === 'price' || k === 'sort') v = Number(v || 0);
+
+        // auto set type by category
+        if(k === 'category'){
+          const cat = String(v || '');
+          adminDraft[idx].category = cat;
+          adminDraft[idx].type = (cat === 'Membership') ? 'Membership' : 'Hearts Dm';
+
+          // refresh row type field
+          const typeInput = row.querySelector('input[data-k="type"]');
+          if(typeInput) typeInput.value = adminDraft[idx].type;
+          return;
+        }
+
         adminDraft[idx][k] = v;
       });
     });
@@ -487,7 +493,6 @@ function renderAdminList(){
       if(item.id){
         await deleteDoc(doc(db, PRICE_COL, item.id));
       }
-      // listener realtime auto refresh
     });
   });
 }
@@ -497,10 +502,13 @@ function adminAddItem(){
     showPopup('Notification', 'Akses ditolak', 'Login admin dulu ya.');
     return;
   }
+
+  const defaultCat = CATEGORY_OPTIONS[0];
+
   adminDraft.unshift({
     id: '',
-    category: CATEGORY_OPTIONS[0],
-    type: 'Reguler',
+    category: defaultCat,
+    type: 'Hearts Dm', // auto sesuai default category
     label: 'Item Baru',
     price: 0,
     sort: 0
@@ -517,11 +525,10 @@ async function adminSaveAll(){
   const msg = document.getElementById('adminSaveMsg');
   if(msg) msg.textContent = 'Menyimpan...';
 
-  // validasi
   for(const it of adminDraft){
-    if(!String(it.category||'').trim() || !String(it.type||'').trim() || !String(it.label||'').trim()){
-      if(msg) msg.textContent = 'Gagal: kategori, tipe, label wajib diisi.';
-      showPopup('Notification', 'Oops', 'Kategori, tipe, dan label wajib diisi.');
+    if(!String(it.category||'').trim() || !String(it.label||'').trim()){
+      if(msg) msg.textContent = 'Gagal: kategori & label wajib diisi.';
+      showPopup('Notification', 'Oops', 'Kategori dan label wajib diisi.');
       return;
     }
     if(Number(it.price) < 0){
@@ -535,9 +542,12 @@ async function adminSaveAll(){
   const colRef = collection(db, PRICE_COL);
 
   for(const it of adminDraft){
+    // auto type by category (final enforce)
+    const finalType = (String(it.category) === 'Membership') ? 'Membership' : 'Hearts Dm';
+
     const data = {
       category: String(it.category).trim(),
-      type: String(it.type).trim(),
+      type: finalType,
       label: String(it.label).trim(),
       price: Number(it.price || 0),
       sort: Number(it.sort || 0),
@@ -558,18 +568,16 @@ async function adminSaveAll(){
 }
 
 // =======================
-// FORM LOGIC (NEW HEARTOPIA VILOG)
+// FORM LOGIC (Heartopia VILOG)
 // =======================
 function formatHarga(harga){
   const hargaNumber = typeof harga === 'number' ? harga : Number(String(harga).replace(/[^\d]/g,''));
   return { hargaNumber, hargaText: "Rp" + new Intl.NumberFormat('id-ID').format(hargaNumber) };
 }
 
-// isi form dari klik pricelist
 window.isiForm = function isiForm(orderLabel, harga, type, category) {
-  // hidden kategori (kt)
   const kt = document.getElementById("kt");
-  if(kt) kt.value = String(category || type || '');
+  if(kt) kt.value = String(category || '');
 
   const nm = document.getElementById("nm");
   if(nm) nm.value = String(orderLabel || '');
@@ -582,11 +590,11 @@ window.isiForm = function isiForm(orderLabel, harga, type, category) {
 };
 
 // =======================
-// KIRIM TELEGRAM + PAYMENT (ADAPT)
+// DOM READY
 // =======================
 document.addEventListener('DOMContentLoaded', function(){
 
-  // start listeners
+  // realtime listeners
   startAnnouncementListener();
   startPricelistListener();
 
@@ -620,7 +628,6 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   });
 
-  // tampilkan panel admin (kalau ?admin=1) walaupun belum login
   applyAdminUI(null);
 
   document.getElementById('btnAdminLogin')?.addEventListener('click', async ()=>{
@@ -635,12 +642,11 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('btnSetOpen')?.addEventListener('click', ()=> setStoreOpen(true));
   document.getElementById('btnSetClose')?.addEventListener('click', ()=> setStoreOpen(false));
 
-  // admin editor actions
   document.getElementById('btnAddItem')?.addEventListener('click', adminAddItem);
   document.getElementById('btnSaveAll')?.addEventListener('click', adminSaveAll);
 
-  // admin announcement save
   document.getElementById('btnSaveAnnouncement')?.addEventListener('click', adminSaveAnnouncement);
+});
 
   // =======================
   // KIRIM TELEGRAM
