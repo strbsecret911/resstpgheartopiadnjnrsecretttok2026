@@ -585,3 +585,20 @@ input:focus, select:focus{
   font-weight: 700;
   cursor: pointer;
 }
+
+/* =======================
+   ANNOUNCEMENT BOARD FIX
+   ======================= */
+#announcementRoot .pricelist-container{
+  display:block !important;   /* matiin grid khusus announcement */
+}
+
+#announcementRoot .price-box{
+  width:100% !important;
+  max-width:680px;            /* kamu bisa ganti 640 / 720 */
+  margin:0 auto;              /* biar center */
+  cursor:default;
+  padding:16px;
+  font-size:13px;
+  line-height:1.55;
+}
