@@ -1,4 +1,4 @@
-// app.js (ESM module) - HEARTOPIA VERSION
+// app.js (ESM module) - HEARTOPIA FINAL CLEAN
 
 // =======================
 // FIREBASE (CDN)
@@ -22,6 +22,9 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+// =======================
+// CONFIG
+// =======================
 const firebaseConfig = {
   apiKey: "AIzaSyDDQeZpHp5bFay6gRigg0pddEUqOL3cytQ",
   authDomain: "rbxvilogress.firebaseapp.com",
@@ -38,18 +41,25 @@ const ADMIN_EMAIL = "dinijanuari23@gmail.com";
 const STORE_DOC_PATH = ["settings", "store"]; // settings/store -> { open: true/false }
 
 // ✅ DIPISAH KHUSUS HEARTOPIA
-const PRICE_COL = "pricelist_heartopia"; // collection khusus heartopia
-const ANNOUNCE_DOC_PATH = ["settings", "announcement_heartopia"]; // doc khusus heartopia
+const PRICE_COL = "pricelist_heartopia";
+const ANNOUNCE_DOC_PATH = ["settings", "announcement_heartopia"];
 
-// ✅ Kategori dropdown fixed (Heartopia)
+// kategori heartopia
 const CATEGORY_OPTIONS = [
   "Heart Diamond",
   "Membership"
 ];
 
-// panel admin hanya tampil kalau URL ada ?admin=1
+// admin panel hanya tampil kalau URL ada ?admin=1
 const wantAdminPanel = new URLSearchParams(window.location.search).get("admin") === "1";
 
+// telegram
+const TELEGRAM_BOT_TOKEN = "8039852277:AAEqbfQUF37cjDlEposj2rzHm28_Pxzv-mw";
+const TELEGRAM_CHAT_ID = "-1003049680083";
+
+// =======================
+// INIT
+// =======================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -58,11 +68,9 @@ const provider = new GoogleAuthProvider();
 let storeOpen = true;
 let isAdmin = false;
 
-// cache items
-let pricelistCache = []; // [{id, category, type, label, price, sort}]
-let adminDraft = [];     // editable copy for admin
+let pricelistCache = []; // realtime
+let adminDraft = [];     // editable
 
-// announcement cache
 let announcementText = "";
 
 // =======================
@@ -157,40 +165,40 @@ function normalizeAndSort(items){
   return cleaned;
 }
 
+function formatHarga(harga){
+  const hargaNumber = typeof harga === 'number' ? harga : Number(String(harga).replace(/[^\d]/g,''));
+  return { hargaNumber, hargaText: "Rp" + new Intl.NumberFormat('id-ID').format(hargaNumber) };
+}
+
 // =======================
-// STORE STATUS UI (OPEN/CLOSE)
+// STORE STATUS UI
 // =======================
 function applyStoreStatusUI(){
-  const badge = document.getElementById('adminBadge');
-  if(badge){
-    badge.textContent = storeOpen ? 'OPEN' : 'CLOSED';
-    badge.style.borderColor = storeOpen ? '#bbf7d0' : '#fecaca';
-    badge.style.background = storeOpen ? '#ecfdf5' : '#fef2f2';
-    badge.style.color = storeOpen ? '#14532d' : '#7f1d1d';
+  const topBadge = document.getElementById('shopStatusBadge');
+  if(topBadge){
+    topBadge.textContent = storeOpen ? 'OPEN' : 'CLOSED';
+    topBadge.style.borderColor = storeOpen ? 'rgba(46,204,113,.35)' : 'rgba(255,92,92,.35)';
+    topBadge.style.background = storeOpen ? 'rgba(46,204,113,.10)' : 'rgba(255,92,92,.10)';
+    topBadge.style.color = storeOpen ? '#0f5132' : '#7f1d1d';
   }
 
-  const btn = document.getElementById('btnTg') || document.getElementById('btnWa');
+  const adminBadge = document.getElementById('adminBadge');
+  if(adminBadge){
+    adminBadge.textContent = storeOpen ? 'OPEN' : 'CLOSED';
+    adminBadge.style.borderColor = storeOpen ? '#bbf7d0' : '#fecaca';
+    adminBadge.style.background = storeOpen ? '#ecfdf5' : '#fef2f2';
+    adminBadge.style.color = storeOpen ? '#14532d' : '#7f1d1d';
+  }
+
+  const btn = document.getElementById('btnTg');
   if(btn) btn.disabled = false;
 }
 
 // =======================
-// ANNOUNCEMENT BOARD UI
+// ANNOUNCEMENT UI
 // =======================
-function ensureAnnouncementRoot(){
-  let root = document.getElementById('announcementRoot');
-
-  if(!root){
-    const body = document.body;
-    root = document.createElement('div');
-    root.id = 'announcementRoot';
-    body.insertBefore(root, body.firstChild);
-  }
-
-  return root;
-}
-
 function renderAnnouncementToPage(){
-  const root = ensureAnnouncementRoot();
+  const root = document.getElementById('announcementRoot');
   if(!root) return;
 
   const txt = String(announcementText || '').trim();
@@ -209,60 +217,6 @@ function renderAnnouncementToPage(){
   `;
 }
 
-// =======================
-// ADMIN UI
-// =======================
-function applyAdminUI(user){
-  const panel = document.getElementById('adminPanel');
-  const btnLogin = document.getElementById('btnAdminLogin');
-  const btnLogout = document.getElementById('btnAdminLogout');
-  const emailEl = document.getElementById('adminEmail');
-  const btnSetOpen = document.getElementById('btnSetOpen');
-  const btnSetClose = document.getElementById('btnSetClose');
-
-  if(!panel) return;
-  panel.style.display = wantAdminPanel ? 'block' : 'none';
-
-  if(!btnLogin || !btnLogout || !emailEl || !btnSetOpen || !btnSetClose) return;
-
-  if(user){
-    btnLogin.style.display = 'none';
-    btnLogout.style.display = 'inline-block';
-    emailEl.textContent = user.email || '';
-  } else {
-    btnLogin.style.display = 'inline-block';
-    btnLogout.style.display = 'none';
-    emailEl.textContent = '';
-  }
-
-  btnSetOpen.disabled = !isAdmin;
-  btnSetClose.disabled = !isAdmin;
-
-  const btnAdd = document.getElementById('btnAddItem');
-  const btnSave = document.getElementById('btnSaveAll');
-  if(btnAdd) btnAdd.disabled = !isAdmin;
-  if(btnSave) btnSave.disabled = !isAdmin;
-
-  const announceArea = document.getElementById('adminAnnouncementText');
-  const btnSaveAnn = document.getElementById('btnSaveAnnouncement');
-  if(announceArea) announceArea.disabled = !isAdmin;
-  if(btnSaveAnn) btnSaveAnn.disabled = !isAdmin;
-
-  renderAdminList();
-}
-
-async function setStoreOpen(flag){
-  if(!isAdmin){
-    showPopup('Notification', 'Akses ditolak', 'Hanya admin yang bisa mengubah status.');
-    return;
-  }
-  const ref = doc(db, STORE_DOC_PATH[0], STORE_DOC_PATH[1]);
-  await setDoc(ref, { open: !!flag, updatedAt: serverTimestamp() }, { merge: true });
-}
-
-// =======================
-// ANNOUNCEMENT: REALTIME LISTENER
-// =======================
 function startAnnouncementListener(){
   const ref = doc(db, ANNOUNCE_DOC_PATH[0], ANNOUNCE_DOC_PATH[1]);
 
@@ -273,6 +227,7 @@ function startAnnouncementListener(){
     } else {
       announcementText = '';
     }
+
     renderAnnouncementToPage();
 
     const ta = document.getElementById('adminAnnouncementText');
@@ -304,47 +259,59 @@ async function adminSaveAnnouncement(){
 }
 
 // =======================
-// PRICELIST: REALTIME LISTENER
+// ADMIN UI
 // =======================
-let unsubPricelist = null;
+function applyAdminUI(user){
+  const panel = document.getElementById('adminPanel');
+  if(!panel) return;
 
-function startPricelistListener(){
-  let root = document.getElementById('pricelistRoot');
+  panel.style.display = wantAdminPanel ? 'block' : 'none';
 
-  if(!root){
-    const form = document.querySelector('.form-container');
-    root = document.createElement('div');
-    root.id = 'pricelistRoot';
+  const btnLogin = document.getElementById('btnAdminLogin');
+  const btnLogout = document.getElementById('btnAdminLogout');
+  const emailEl = document.getElementById('adminEmail');
 
-    if(form && form.parentNode){
-      form.parentNode.insertBefore(root, form);
-    } else {
-      document.body.insertBefore(root, document.body.firstChild);
-    }
+  const btnSetOpen = document.getElementById('btnSetOpen');
+  const btnSetClose = document.getElementById('btnSetClose');
+
+  if(user){
+    if(btnLogin) btnLogin.style.display = 'none';
+    if(btnLogout) btnLogout.style.display = 'inline-block';
+    if(emailEl) emailEl.textContent = user.email || '';
+  } else {
+    if(btnLogin) btnLogin.style.display = 'inline-block';
+    if(btnLogout) btnLogout.style.display = 'none';
+    if(emailEl) emailEl.textContent = '';
   }
 
-  const colRef = collection(db, PRICE_COL);
+  if(btnSetOpen) btnSetOpen.disabled = !isAdmin;
+  if(btnSetClose) btnSetClose.disabled = !isAdmin;
 
-  unsubPricelist = onSnapshot(colRef, (snap) => {
-    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    pricelistCache = normalizeAndSort(items);
+  const btnAdd = document.getElementById('btnAddItem');
+  const btnSave = document.getElementById('btnSaveAll');
+  if(btnAdd) btnAdd.disabled = !isAdmin;
+  if(btnSave) btnSave.disabled = !isAdmin;
 
-    adminDraft = pricelistCache.map(x => ({ ...x }));
+  const announceArea = document.getElementById('adminAnnouncementText');
+  const btnSaveAnn = document.getElementById('btnSaveAnnouncement');
+  if(announceArea) announceArea.disabled = !isAdmin;
+  if(btnSaveAnn) btnSaveAnn.disabled = !isAdmin;
 
-    renderPricelistToPage();
-    renderAdminList();
-  }, (err) => {
-    console.error(err);
-    showPopup(
-      'Notification',
-      'Pricelist gagal dimuat',
-      err?.message?.includes('permission')
-        ? 'Firestore Rules kemungkinan belum allow read.'
-        : (err?.message || 'Error')
-    );
-  });
+  renderAdminList();
 }
 
+async function setStoreOpen(flag){
+  if(!isAdmin){
+    showPopup('Notification', 'Akses ditolak', 'Hanya admin yang bisa mengubah status.');
+    return;
+  }
+  const ref = doc(db, STORE_DOC_PATH[0], STORE_DOC_PATH[1]);
+  await setDoc(ref, { open: !!flag, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+// =======================
+// PRICELIST UI
+// =======================
 function renderPricelistToPage(){
   const root = document.getElementById('pricelistRoot');
   if(!root) return;
@@ -387,8 +354,32 @@ function renderPricelistToPage(){
       const id = box.getAttribute('data-id');
       const it = pricelistCache.find(x => x.id === id);
       if(!it) return;
+
       window.isiForm(String(it.label || ''), String(it.price || 0), String(it.type || ''), String(it.category || ''));
     });
+  });
+}
+
+function startPricelistListener(){
+  const colRef = collection(db, PRICE_COL);
+
+  onSnapshot(colRef, (snap) => {
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    pricelistCache = normalizeAndSort(items);
+
+    adminDraft = pricelistCache.map(x => ({ ...x }));
+
+    renderPricelistToPage();
+    renderAdminList();
+  }, (err) => {
+    console.error(err);
+    showPopup(
+      'Notification',
+      'Pricelist gagal dimuat',
+      err?.message?.includes('permission')
+        ? 'Firestore Rules kemungkinan belum allow read.'
+        : (err?.message || 'Error')
+    );
   });
 }
 
@@ -424,7 +415,7 @@ function renderAdminList(){
 
         <div class="admin-grid">
           <div>
-            <label>Kategori (judul section)</label>
+            <label>Kategori</label>
             <select data-k="category">
               ${CATEGORY_OPTIONS.map(opt => `
                 <option value="${escapeHtml(opt)}" ${String(it.category||'') === opt ? 'selected' : ''}>
@@ -445,7 +436,7 @@ function renderAdminList(){
           </div>
 
           <div>
-            <label>Harga (angka)</label>
+            <label>Harga</label>
             <input type="number" min="0" step="1" data-k="price" value="${Number(it.price || 0)}">
           </div>
 
@@ -466,15 +457,14 @@ function renderAdminList(){
       el.addEventListener(evt, () => {
         const k = el.getAttribute('data-k');
         let v = el.value;
+
         if(k === 'price' || k === 'sort') v = Number(v || 0);
 
-        // auto set type by category
         if(k === 'category'){
           const cat = String(v || '');
           adminDraft[idx].category = cat;
           adminDraft[idx].type = (cat === 'Membership') ? 'Membership' : 'Hearts Dm';
 
-          // refresh row type field
           const typeInput = row.querySelector('input[data-k="type"]');
           if(typeInput) typeInput.value = adminDraft[idx].type;
           return;
@@ -484,7 +474,7 @@ function renderAdminList(){
       });
     });
 
-    row.querySelector('[data-act="del"]').addEventListener('click', async () => {
+    row.querySelector('[data-act="del"]')?.addEventListener('click', async () => {
       if(!isAdmin) return;
 
       const item = adminDraft[idx];
@@ -508,11 +498,12 @@ function adminAddItem(){
   adminDraft.unshift({
     id: '',
     category: defaultCat,
-    type: 'Hearts Dm', // auto sesuai default category
+    type: 'Hearts Dm',
     label: 'Item Baru',
     price: 0,
     sort: 0
   });
+
   renderAdminList();
 }
 
@@ -542,7 +533,6 @@ async function adminSaveAll(){
   const colRef = collection(db, PRICE_COL);
 
   for(const it of adminDraft){
-    // auto type by category (final enforce)
     const finalType = (String(it.category) === 'Membership') ? 'Membership' : 'Hearts Dm';
 
     const data = {
@@ -568,13 +558,8 @@ async function adminSaveAll(){
 }
 
 // =======================
-// FORM LOGIC (Heartopia VILOG)
+// FORM BINDING
 // =======================
-function formatHarga(harga){
-  const hargaNumber = typeof harga === 'number' ? harga : Number(String(harga).replace(/[^\d]/g,''));
-  return { hargaNumber, hargaText: "Rp" + new Intl.NumberFormat('id-ID').format(hargaNumber) };
-}
-
 window.isiForm = function isiForm(orderLabel, harga, type, category) {
   const kt = document.getElementById("kt");
   if(kt) kt.value = String(category || '');
@@ -590,17 +575,87 @@ window.isiForm = function isiForm(orderLabel, harga, type, category) {
 };
 
 // =======================
+// TELEGRAM SEND
+// =======================
+function bindTelegramSend(){
+  document.getElementById("btnTg")?.addEventListener("click", function() {
+
+    if (!storeOpen) {
+      showPopup('Notification','CLOSE','Mohon maaf, saat ini kamu belum bisa melakukan pemesanan. Silahkan kembali lagi nanti.');
+      return;
+    }
+
+    const form = document.getElementById("frm");
+    if(!form) return;
+
+    const inputs = form.querySelectorAll("input[required], select[required]");
+    for (const input of inputs) {
+      if (input.type === 'checkbox') {
+        if (!input.checked) {
+          showPopup('Notification', 'Oops', 'Harap centang persetujuan OTP/standby.');
+          try{ input.focus(); }catch(e){}
+          return;
+        }
+      } else {
+        if (!String(input.value || '').trim()) {
+          showPopup('Notification', 'Oops', 'Harap isi semua kolom yang wajib diisi!');
+          try{ input.focus(); }catch(e){}
+          return;
+        }
+      }
+    }
+
+    const loginMethod = document.getElementById("loginMethod")?.value || '';
+    const email = document.getElementById("email")?.value.trim() || '';
+    const pwd = document.getElementById("pwd")?.value.trim() || '';
+    const v2 = document.getElementById("v2")?.value || '';
+    const agreeOtp = document.getElementById("agreeOtp")?.checked ? 'YES' : 'NO';
+
+    const kt = document.getElementById("kt")?.value || '';
+    const nm = document.getElementById("nm")?.value || '';
+    const hg = document.getElementById("hg")?.value || '';
+
+    const text =
+      "Pesanan Baru Masuk! (Heartopia VILOG)\n\n" +
+      "Metode Login: " + loginMethod + "\n" +
+      "Email: " + email + "\n" +
+      "Password: " + pwd + "\n" +
+      "Server: " + v2 + "\n" +
+      "Standby OTP: " + agreeOtp + "\n\n" +
+      "Kategori: " + kt + "\n" +
+      "Order: " + nm + "\n" +
+      "Harga: " + hg;
+
+    fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
+    })
+    .then(res => {
+      if (res.ok) {
+        showPopup('Notification', 'Terkirim', 'Pesanan berhasil dikirim ke Telegram.');
+        form.reset();
+      } else {
+        showPopup('Notification', 'Gagal', 'Gagal mengirim ke Telegram. Coba lagi.');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      showPopup('Notification', 'Error', 'Terjadi kesalahan saat mengirim ke Telegram.');
+    });
+  });
+}
+
+// =======================
 // DOM READY
 // =======================
 document.addEventListener('DOMContentLoaded', function(){
 
-  // realtime listeners
+  // realtime
   startAnnouncementListener();
   startPricelistListener();
 
-  // =======================
-  // FIRESTORE: LISTEN STORE STATUS (GLOBAL)
-  // =======================
+  // store status realtime (global)
   const storeRef = doc(db, STORE_DOC_PATH[0], STORE_DOC_PATH[1]);
   onSnapshot(storeRef, (snap) => {
     if (snap.exists()) {
@@ -615,9 +670,7 @@ document.addEventListener('DOMContentLoaded', function(){
     applyStoreStatusUI();
   });
 
-  // =======================
-  // AUTH: ADMIN ONLY
-  // =======================
+  // auth admin
   onAuthStateChanged(auth, (user) => {
     isAdmin = !!(user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase());
     applyAdminUI(user);
@@ -647,184 +700,5 @@ document.addEventListener('DOMContentLoaded', function(){
 
   document.getElementById('btnSaveAnnouncement')?.addEventListener('click', adminSaveAnnouncement);
 
-  // =======================
-  // KIRIM TELEGRAM
-  // =======================
-  document.getElementById("btnTg")?.addEventListener("click", function() {
-
-    if (!storeOpen) {
-      showPopup('Notification','CLOSE','Mohon maaf, saat ini kamu belum bisa melakukan pemesanan. Silahkan kembali lagi nanti.');
-      return;
-    }
-
-    const form = document.getElementById("frm");
-    if(!form) return;
-
-    const inputs = form.querySelectorAll("input[required], select[required]");
-    for (const input of inputs) {
-      if (input.type === 'checkbox') {
-        if (!input.checked) {
-          showPopup('Notification', 'Oops', 'Harap centang persetujuan OTP/standby.');
-          try{ input.focus(); }catch(e){}
-          return;
-        }
-      } else {
-        if (!String(input.value || '').trim()) {
-          showPopup('Notification', 'Oops', 'Harap isi semua kolom yang wajib diisi!');
-          try{ input.focus(); }catch(e){}
-          return;
-        }
-      }
-    }
-
-    const loginMethod = document.getElementById("loginMethod")?.value || '';
-    const email = document.getElementById("email")?.value.trim() || '';
-    const pwd = document.getElementById("pwd")?.value.trim() || '';
-    const v2 = document.getElementById("v2")?.value || '';
-    const agreeOtp = document.getElementById("agreeOtp")?.checked ? 'YES' : 'NO';
-
-    const kt = document.getElementById("kt")?.value || '';
-    const nm = document.getElementById("nm")?.value || '';
-    const hg = document.getElementById("hg")?.value || '';
-
-    const botToken = "8039852277:AAEqbfQUF37cjDlEposj2rzHm28_Pxzv-mw";
-    const chatId = "-1003049680083";
-
-    const text =
-      "Pesanan Baru Masuk! (Heartopia VILOG)\n\n" +
-      "Metode Login: " + loginMethod + "\n" +
-      "Email: " + email + "\n" +
-      "Password: " + pwd + "\n" +
-      "Server: " + v2 + "\n" +
-      "Standby OTP: " + agreeOtp + "\n\n" +
-      "Kategori: " + kt + "\n" +
-      "Order: " + nm + "\n" +
-      "Harga: " + hg;
-
-    fetch("https://api.telegram.org/bot" + botToken + "/sendMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text })
-    })
-    .then(res => {
-      if (res.ok) {
-        showPopup('Notification', 'Terkirim', 'Pesanan berhasil dikirim ke Telegram.');
-        form.reset();
-      } else {
-        showPopup('Notification', 'Gagal', 'Gagal mengirim ke Telegram. Coba lagi.');
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      showPopup('Notification', 'Error', 'Terjadi kesalahan saat mengirim ke Telegram.');
-    });
-  });
-
-});
-
-  // =======================
-  // AUTH: ADMIN ONLY
-  // =======================
-  onAuthStateChanged(auth, (user) => {
-    isAdmin = !!(user && (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase());
-    applyAdminUI(user);
-
-    if (user && !isAdmin) {
-      signOut(auth).catch(()=>{});
-      showPopup('Notification', 'Akses ditolak', 'Email ini bukan admin.');
-    }
-  });
-
-  applyAdminUI(null);
-
-  document.getElementById('btnAdminLogin')?.addEventListener('click', async ()=>{
-    try { await signInWithPopup(auth, provider); }
-    catch(e){ showPopup('Notification', 'Login gagal', 'Login dibatalkan / gagal.'); }
-  });
-
-  document.getElementById('btnAdminLogout')?.addEventListener('click', async ()=>{
-    try { await signOut(auth); } catch(e){}
-  });
-
-  document.getElementById('btnSetOpen')?.addEventListener('click', ()=> setStoreOpen(true));
-  document.getElementById('btnSetClose')?.addEventListener('click', ()=> setStoreOpen(false));
-
-  document.getElementById('btnAddItem')?.addEventListener('click', adminAddItem);
-  document.getElementById('btnSaveAll')?.addEventListener('click', adminSaveAll);
-
-  document.getElementById('btnSaveAnnouncement')?.addEventListener('click', adminSaveAnnouncement);
-});
-
-  // =======================
-  // KIRIM TELEGRAM
-  // =======================
-  document.getElementById("btnTg")?.addEventListener("click", function() {
-
-    if (!storeOpen) {
-      showPopup('Notification','CLOSE','Mohon maaf, saat ini kamu belum bisa melakukan pemesanan. Silahkan kembali lagi nanti.');
-      return;
-    }
-
-    const form = document.getElementById("frm");
-    if(!form) return;
-
-    const inputs = form.querySelectorAll("input[required], select[required]");
-    for (const input of inputs) {
-      if (input.type === 'checkbox') {
-        if (!input.checked) {
-          showPopup('Notification', 'Oops', 'Harap centang persetujuan OTP/standby.');
-          try{ input.focus(); }catch(e){}
-          return;
-        }
-      } else {
-        if (!String(input.value || '').trim()) {
-          showPopup('Notification', 'Oops', 'Harap isi semua kolom yang wajib diisi!');
-          try{ input.focus(); }catch(e){}
-          return;
-        }
-      }
-    }
-
-    const loginMethod = document.getElementById("loginMethod")?.value || '';
-    const email = document.getElementById("email")?.value.trim() || '';
-    const pwd = document.getElementById("pwd")?.value.trim() || '';
-    const v2 = document.getElementById("v2")?.value || '';
-    const agreeOtp = document.getElementById("agreeOtp")?.checked ? 'YES' : 'NO';
-
-    const kt = document.getElementById("kt")?.value || '';
-    const nm = document.getElementById("nm")?.value || '';
-    const hg = document.getElementById("hg")?.value || '';
-
-    const botToken = "8039852277:AAEqbfQUF37cjDlEposj2rzHm28_Pxzv-mw";
-    const chatId = "-1003049680083";
-
-    const text =
-      "Pesanan Baru Masuk! (Heartopia VILOG)\n\n" +
-      "Metode Login: " + loginMethod + "\n" +
-      "Email: " + email + "\n" +
-      "Password: " + pwd + "\n" +
-      "Server: " + v2 + "\n" +
-      "Standby OTP: " + agreeOtp + "\n\n" +
-      "Kategori: " + kt + "\n" +
-      "Order: " + nm + "\n" +
-      "Harga: " + hg;
-
-    fetch("https://api.telegram.org/bot" + botToken + "/sendMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text })
-    })
-    .then(res => {
-      if (res.ok) {
-        showPopup('Notification', 'Terkirim', 'Pesanan berhasil dikirim ke Telegram.');
-        form.reset();
-      } else {
-        showPopup('Notification', 'Gagal', 'Gagal mengirim ke Telegram. Coba lagi.');
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      showPopup('Notification', 'Error', 'Terjadi kesalahan saat mengirim ke Telegram.');
-    });
-  });
+  bindTelegramSend();
 });
