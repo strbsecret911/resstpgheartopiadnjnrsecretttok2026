@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pricelist & Form Pembelian Heartopia - VILOG</title>
+  <title>Heartopia VILOG</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -14,8 +15,9 @@
       <div class="brand-title">VILOG</div>
       <div class="brand-sub">Pricelist & Form Pembelian Heartopia</div>
     </div>
-    <!-- ✅ disamain biar status OPEN/CLOSE kebaca -->
-    <div id="adminBadge" class="status-badge">—</div>
+
+    <!-- status badge atas -->
+    <div id="shopStatusBadge" class="status-badge">—</div>
   </header>
 
   <!-- BOARD ANNOUNCEMENT (render dari Firestore) -->
@@ -93,56 +95,6 @@
     </form>
   </div>
 
-  <!-- Payment Modal (tetap ada di HTML kamu, walau di app.js heartopia saat ini belum dipanggil) -->
-  <div id="paymentModalBackdrop" class="modal-backdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <h3 id="modalTitle">Pembayaran</h3>
-
-      <img id="modalQr" class="qr" src="" alt="QR Pembayaran">
-      <div id="modalAmount" class="amount">Rp0</div>
-
-      <div class="method-switch">
-        <button type="button" class="method-btn active" data-method="qris">QRIS</button>
-        <button type="button" class="method-btn" data-method="gopay">GoPay</button>
-        <button type="button" class="method-btn" data-method="seabank">SeaBank</button>
-        <button type="button" class="method-btn" data-method="bri">BRI</button>
-      </div>
-
-      <div class="wallet-section">
-        <div id="walletLabel" class="wallet-label">QRIS All Payment (scan QR di atas)</div>
-
-        <div id="walletNumberWrapper">
-          <div id="walletNumberTitle" class="wallet-number-title">No tujuan pembayaran</div>
-          <div id="walletNumber" class="wallet-number">Gunakan QR di atas</div>
-          <button id="copyNumberBtn" type="button" class="copy-mini-btn">Salin nomor</button>
-        </div>
-
-        <div id="walletNote" class="wallet-note">
-          QRIS hingga Rp499.000 tidak ada biaya tambahan. Di atas itu akan dikenakan biaya 0,3% dari nominal.
-        </div>
-      </div>
-
-      <div class="pay-note">
-        Data pesanan berhasil dikirim! Silahkan lakukan pembayaran, lalu screenshot bukti pembayaran.
-      </div>
-
-      <div class="actions">
-        <button id="copyAmountBtn" type="button">Salin Jumlah</button>
-        <button id="openBotBtn" type="button">Buka Bot</button>
-      </div>
-
-      <div class="small-note">
-        Setelah bayar dan screenshot, klik Buka Bot untuk konfirmasi pembayaran agar pesanan segera diproses.
-      </div>
-
-      <div style="margin-top:10px;">
-        <button id="closeModalBtn" type="button" class="btn-gray">Tutup</button>
-      </div>
-
-      <div id="copySuccess" class="copy-success"></div>
-    </div>
-  </div>
-
   <!-- ADMIN PANEL (muncul kalau ?admin=1) -->
   <div id="adminPanel" class="admin-panel" style="display:none;">
     <div class="admin-title">
@@ -177,9 +129,11 @@
         </div>
       </div>
 
-      <textarea id="adminAnnouncementText"
-        style="width:100%; min-height:110px; padding:10px; border-radius:12px; border:1px solid #e5e7eb; outline:none;"
-        placeholder="Tulis announcement / alur proses di sini..."></textarea>
+      <textarea
+        id="adminAnnouncementText"
+        style="width:100%; min-height:110px; padding:10px; border-radius:12px; border:1px solid rgba(255,138,204,.55); outline:none;"
+        placeholder="Tulis announcement / alur proses di sini..."
+      ></textarea>
 
       <div class="admin-savebar" style="margin-top:10px;">
         <button type="button" id="btnSaveAnnouncement" class="admin-save">Simpan Announcement</button>
@@ -196,12 +150,13 @@
         <button type="button" id="btnAddItem" class="admin-add">+ Tambah Item</button>
       </div>
 
-      <div id="adminList" class="admin-list"></div>
-
+      <!-- sticky savebar ada di CSS -->
       <div class="admin-savebar">
         <button type="button" id="btnSaveAll" class="admin-save">Simpan Perubahan</button>
         <div id="adminSaveMsg" class="admin-savemsg"></div>
       </div>
+
+      <div id="adminList" class="admin-list"></div>
     </div>
   </div>
 
@@ -210,4 +165,3 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-```0
