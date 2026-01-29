@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pricelist & Form Pembelian Robux - VILOG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-title">VILOG</div>
+      <div class="brand-sub">Pricelist & Form Pembelian Robux</div>
+    </div>
+    <div id="shopStatusBadge" class="status-badge">—</div>
+  </header>
+
+  <!-- BOARD ANNOUNCEMENT (render dari Firestore) -->
+<div id="announcementRoot"></div>
+
+  <!-- PRICELIST RENDER DARI FIRESTORE -->
+  <div id="pricelistRoot"></div>
+
+  <!-- Form -->
+  <div class="form-container">
+    <h2>Formulir Pembelian Robux VILOG</h2>
+
+    <form id="orderForm" autocomplete="off">
+      <div class="form-group">
+        <label for="username">Username Roblox *</label>
+        <input type="text" id="username" name="username" placeholder="Username Roblox" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password Roblox *</label>
+        <input type="password" id="password" name="password" placeholder="Password Roblox" required>
+      </div>
+
+      <div class="form-group">
+        <label for="v2l">Verifikasi 2 Langkah (V2L) *</label>
+        <select id="v2l" name="v2l" required>
+          <option value="">-- Pilih Status --</option>
+          <option value="OFF">Nonaktif (OFF)</option>
+          <option value="ON">Aktif (ON)</option>
+        </select>
+      </div>
+
+      <div class="form-group hidden" id="metodeV2L_div">
+        <label for="metodeV2L">Pilih Metode V2L *</label>
+        <select id="metodeV2L" name="metodeV2L"></select>
+      </div>
+
+      <div class="form-group hidden" id="backupCode_div">
+        <label for="backupCode">Masukkan Backup Code *</label>
+        <input type="text" id="backupCode" name="backupCode" placeholder="Isi Backup Code">
+        <div class="notes">Masukkan 1-3 backup code yang belum pernah digunakan.</div>
+      </div>
+
+      <div class="form-group hidden" id="emailNote_div">
+        <div class="notes">Pastikan storage email tidak penuh supaya bisa menerima kode V2L. Wajib standby setelah payment & diharapkan fastrespon.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="kategori">Kategori Robux *</label>
+        <input type="text" id="kategori" name="kategori" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label for="nominal">Jumlah Order *</label>
+        <input type="text" id="nominal" name="nominal" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label for="harga">Harga *</label>
+        <input type="text" id="harga" name="harga" readonly required>
+      </div>
+
+      <div style="text-align:center; margin: 14px 0 6px;">
+        <button type="button" id="btnWa">Pesan via Telegram</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Pembayaran</h3>
+
+      <img id="modalQr" class="qr" src="" alt="QR Pembayaran">
+      <div id="modalAmount" class="amount">Rp0</div>
+
+      <div class="method-switch">
+        <button type="button" class="method-btn active" data-method="qris">QRIS</button>
+        <button type="button" class="method-btn" data-method="gopay">GoPay</button>
+        <button type="button" class="method-btn" data-method="seabank">SeaBank</button>
+        <button type="button" class="method-btn" data-method="bri">BRI</button>
+      </div>
+
+      <div class="wallet-section">
+        <div id="walletLabel" class="wallet-label">QRIS All Payment (scan QR di atas)</div>
+
+        <div id="walletNumberWrapper">
+          <div id="walletNumberTitle" class="wallet-number-title">No tujuan pembayaran</div>
+          <div id="walletNumber" class="wallet-number">Gunakan QR di atas</div>
+          <button id="copyNumberBtn" type="button" class="copy-mini-btn">Salin nomor</button>
+        </div>
+
+        <div id="walletNote" class="wallet-note">
+          QRIS hingga Rp499.000 tidak ada biaya tambahan. Di atas itu akan dikenakan biaya 0,3% dari nominal.
+        </div>
+      </div>
+
+      <div class="pay-note">
+        Data pesanan berhasil dikirim! Silahkan lakukan pembayaran, lalu screenshot bukti pembayaran.
+      </div>
+
+      <div class="actions">
+        <button id="copyAmountBtn" type="button">Salin Jumlah</button>
+        <button id="openBotBtn" type="button">Buka Bot</button>
+      </div>
+
+      <div class="small-note">
+        Setelah bayar dan screenshot, klik Buka Bot untuk konfirmasi pembayaran agar pesanan segera diproses.
+      </div>
+
+      <div style="margin-top:10px;">
+        <button id="closeModalBtn" type="button" class="btn-gray">Tutup</button>
+      </div>
+
+      <div id="copySuccess" class="copy-success"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL (muncul kalau ?admin=1) -->
+  <div id="adminPanel" class="admin-panel" style="display:none;">
+    <div class="admin-title">
+      <span>Admin Panel</span>
+      <span id="adminBadge" class="admin-badge">—</span>
+    </div>
+
+    <div class="admin-auth">
+      <button type="button" id="btnAdminLogin" class="admin-login">Login Admin</button>
+      <button type="button" id="btnAdminLogout" class="admin-logout" style="display:none;">Logout</button>
+      <div id="adminEmail" class="admin-email"></div>
+    </div>
+
+    <div class="admin-actions">
+      <button type="button" id="btnSetOpen" class="admin-open">OPEN</button>
+      <button type="button" id="btnSetClose" class="admin-close">CLOSE</button>
+    </div>
+
+    <div class="admin-mini">
+      Admin hanya untuk <b>dinijanuari23@gmail.com</b><br>
+      Panel muncul jika URL ada <b>?admin=1</b>
+    </div>
+
+    <hr class="admin-hr"/>
+
+    <!-- ✅ Announcement Editor -->
+<div class="admin-editor" style="margin-bottom:14px;">
+  <div class="admin-editor-head">
+    <div>
+      <div class="admin-h">Edit Announcement</div>
+      <div class="admin-sub">Isi board announcement untuk alur proses / info penting.</div>
+    </div>
+  </div>
+
+  <textarea id="adminAnnouncementText"
+    style="width:100%; min-height:110px; padding:10px; border-radius:12px; border:1px solid #e5e7eb; outline:none;"
+    placeholder="Tulis announcement / alur proses di sini..."></textarea>
+
+  <div class="admin-savebar" style="margin-top:10px;">
+    <button type="button" id="btnSaveAnnouncement" class="admin-save">Simpan Announcement</button>
+  </div>
+</div>
+
+    <div class="admin-editor">
+      <div class="admin-editor-head">
+        <div>
+          <div class="admin-h">Edit Pricelist</div>
+          <div class="admin-sub">Tambah / edit / hapus item, lalu simpan.</div>
+        </div>
+        <button type="button" id="btnAddItem" class="admin-add">+ Tambah Item</button>
+      </div>
+
+      <div id="adminList" class="admin-list"></div>
+
+      <div class="admin-savebar">
+        <button type="button" id="btnSaveAll" class="admin-save">Simpan Perubahan</button>
+        <div id="adminSaveMsg" class="admin-savemsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="validationContainer"></div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
