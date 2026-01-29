@@ -23,65 +23,74 @@
   <!-- PRICELIST RENDER DARI FIRESTORE -->
   <div id="pricelistRoot"></div>
 
-  <!-- Form -->
-  <div class="form-container">
-    <h2>Formulir Pembelian Robux VILOG</h2>
+<!-- Form -->
+<div class="form-container">
+  <h2>Form Pembelian Heartopia VILOG</h2>
 
-    <form id="orderForm" autocomplete="off">
-      <div class="form-group">
-        <label for="username">Username Roblox *</label>
-        <input type="text" id="username" name="username" placeholder="Username Roblox" required>
+  <form id="frm" autocomplete="off">
+
+    <div class="form-group">
+      <label for="loginMethod">Metode Login *</label>
+      <select id="loginMethod" name="loginMethod" required>
+        <option value="">-- Pilih Metode --</option>
+        <option value="Google">Google</option>
+        <option value="Facebook">Facebook</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email *</label>
+      <input type="email" id="email" name="email" placeholder="Email akun" required>
+    </div>
+
+    <div class="form-group">
+      <label for="pwd">Password *</label>
+      <input type="password" id="pwd" name="pwd" placeholder="Password akun" required>
+    </div>
+
+    <div class="form-group">
+      <label for="v2">Server *</label>
+      <select id="v2" name="v2" required>
+        <option value="">-- Pilih Server --</option>
+        <option value="SEA">SEA</option>
+        <option value="ASIA">ASIA</option>
+        <option value="TW">TW</option>
+        <option value="HK/MO">HK / MO</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <div class="notes">
+        Untuk membeli produk ini, akan diperlukan verifikasi kode/approve device dengan angka.
+        Centang apabila kamu bersedia standby & berkabar.
       </div>
 
-      <div class="form-group">
-        <label for="password">Password Roblox *</label>
-        <input type="password" id="password" name="password" placeholder="Password Roblox" required>
-      </div>
+      <label class="otp-check">
+        <input type="checkbox" id="agreeOtp" required>
+        <span>Saya telah membaca board announcement diatas & bisa standby sampai pesanan done.</span>
+      </label>
+    </div>
 
-      <div class="form-group">
-        <label for="v2l">Verifikasi 2 Langkah (V2L) *</label>
-        <select id="v2l" name="v2l" required>
-          <option value="">-- Pilih Status --</option>
-          <option value="OFF">Nonaktif (OFF)</option>
-          <option value="ON">Aktif (ON)</option>
-        </select>
-      </div>
+    <div class="form-group hidden">
+      <label for="kt">Kategori *</label>
+      <input type="text" id="kt" name="kt" readonly required>
+    </div>
 
-      <div class="form-group hidden" id="metodeV2L_div">
-        <label for="metodeV2L">Pilih Metode V2L *</label>
-        <select id="metodeV2L" name="metodeV2L"></select>
-      </div>
+    <div class="form-group">
+      <label for="nm">Order *</label>
+      <input type="text" id="nm" name="nm" readonly required>
+    </div>
 
-      <div class="form-group hidden" id="backupCode_div">
-        <label for="backupCode">Masukkan Backup Code *</label>
-        <input type="text" id="backupCode" name="backupCode" placeholder="Isi Backup Code">
-        <div class="notes">Masukkan 1-3 backup code yang belum pernah digunakan.</div>
-      </div>
+    <div class="form-group">
+      <label for="hg">Harga *</label>
+      <input type="text" id="hg" name="hg" readonly required>
+    </div>
 
-      <div class="form-group hidden" id="emailNote_div">
-        <div class="notes">Pastikan storage email tidak penuh supaya bisa menerima kode V2L. Wajib standby setelah payment & diharapkan fastrespon.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="kategori">Kategori Robux *</label>
-        <input type="text" id="kategori" name="kategori" readonly required>
-      </div>
-
-      <div class="form-group">
-        <label for="nominal">Jumlah Order *</label>
-        <input type="text" id="nominal" name="nominal" readonly required>
-      </div>
-
-      <div class="form-group">
-        <label for="harga">Harga *</label>
-        <input type="text" id="harga" name="harga" readonly required>
-      </div>
-
-      <div style="text-align:center; margin: 14px 0 6px;">
-        <button type="button" id="btnWa">Pesan via Telegram</button>
-      </div>
-    </form>
-  </div>
+    <div style="text-align:center; margin:14px 0 6px;">
+      <button type="button" id="btnTg">Pesan via Telegram</button>
+    </div>
+  </form>
+</div>
 
   <!-- Payment Modal -->
   <div id="paymentModalBackdrop" class="modal-backdrop" aria-hidden="true">
